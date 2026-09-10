@@ -15,11 +15,11 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- ▼▼▼  COLOQUE OS NICKS AQUI  ▼▼▼
 -- ═══════════════════════════════════════════════════════════════
 local allowedUsers = {
-    "seunome",   -- exemplo
-    "antipathicox",
+    "nickdapessoataletc",   -- exemplo
+    "AntipathicoX",
     "mitonoanimefight",
-    "seunome",          -- coloque o nick real
-    -- "OutroNick",         -- descomente e adicione mais se quiser
+    "SeuNickAqui",          -- coloque o nick real
+    -- "OutroNick",
 }
 -- ═══════════════════════════════════════════════════════════════
 -- ▲▲▲  FIM DA LISTA DE NICKS  ▲▲▲
@@ -192,31 +192,52 @@ end
 -- GUI Helpers
 -- ─────────────────────────────────────────────────────────────
 local function uiCorner(parent, r)
-    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, r or 6); c.Parent = parent
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, r or 6)
+    c.Parent = parent
 end
 
 local function uiStroke(parent, color, thick)
-    local s = Instance.new("UIStroke"); s.Color = color or C.border; s.Thickness = thick or 1; s.Parent = parent
+    local s = Instance.new("UIStroke")
+    s.Color = color or C.border
+    s.Thickness = thick or 1
+    s.Parent = parent
 end
 
+-- Arrastar com suporte a Mouse + Touch (Mobile)
 local function makeDraggable(frame, handle)
-    local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
+    local dragging = false
+    local dragStart = nil
+    local startPos = nil
+
     handle = handle or frame
-    handle.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging, dragStart, startPos = true, i.Position, frame.Position
+
+    local function beginDrag(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
         end
-    end)
-    handle.InputChanged:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseMovement then dragInput = i end
-    end)
-    handle.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end)
-    local conn = UserInputService.InputChanged:Connect(function(i)
-        if dragging and i == dragInput then
-            local d = i.Position - dragStart
-            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+    end
+
+    local function endDrag(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end
+
+    handle.InputBegan:Connect(beginDrag)
+    handle.InputEnded:Connect(endDrag)
+
+    local conn = UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
         end
     end)
     table.insert(connections, conn)
@@ -228,15 +249,24 @@ end
 local old = playerGui:FindFirstChild("CDTController")
 if old then old:Destroy() end
 
-local sg = Instance.new("ScreenGui"); sg.Name = "CDTController"; sg.ResetOnSpawn = false; sg.Parent = playerGui
+local sg = Instance.new("ScreenGui")
+sg.Name = "CDTController"
+sg.ResetOnSpawn = false
+sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+sg.Parent = playerGui
+
 sg:GetPropertyChangedSignal("Parent"):Connect(function()
-    if not sg.Parent then for _, c in ipairs(connections) do c:Disconnect() end end
+    if not sg.Parent then
+        for _, c in ipairs(connections) do
+            c:Disconnect()
+        end
+    end
 end)
 
--- Botão fechado: الانجراف
+-- Botão fechado
 local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0, 88, 0, 22)
-toggleBtn.Position = UDim2.new(0, 14, 0.5, -11)
+toggleBtn.Size = UDim2.new(0, 90, 0, 26)
+toggleBtn.Position = UDim2.new(0, 14, 0.5, -13)
 toggleBtn.BackgroundColor3 = C.bg
 toggleBtn.Text = "الانجراف"
 toggleBtn.Font = Enum.Font.GothamBold
@@ -247,28 +277,24 @@ uiCorner(toggleBtn, 6)
 uiStroke(toggleBtn, C.border, 1)
 makeDraggable(toggleBtn)
 
--- Menu principal (pequeno)
+-- Menu principal
 local menu = Instance.new("Frame")
-menu.Size = UDim2.new(0, 178, 0, 0)
-menu.Position = UDim2.new(0, 110, 0.5, -11)
+menu.Size = UDim2.new(0, 190, 0, 0)
+menu.Position = UDim2.new(0, 110, 0.5, -13)
 menu.BackgroundColor3 = C.bg
 menu.AutomaticSize = Enum.AutomaticSize.Y
 menu.Visible = false
+menu.ClipsDescendants = true
 menu.Parent = sg
-uiCorner(menu, 7)
+uiCorner(menu, 8)
 uiStroke(menu, C.border, 1)
 
-local menuList = Instance.new("UIListLayout")
-menuList.SortOrder = Enum.SortOrder.LayoutOrder
-menuList.Parent = menu
-
--- Title bar
+-- Title bar (arrastável)
 local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 22)
+titleBar.Size = UDim2.new(1, 0, 0, 26)
 titleBar.BackgroundColor3 = C.panel
-titleBar.LayoutOrder = 1
 titleBar.Parent = menu
-uiCorner(titleBar, 7)
+uiCorner(titleBar, 8)
 
 local titleFix = Instance.new("Frame")
 titleFix.Size = UDim2.new(1, 0, 0.5, 0)
@@ -279,42 +305,49 @@ titleFix.Parent = titleBar
 
 local titleLabel = Instance.new("TextLabel")
 titleLabel.BackgroundTransparency = 1
-titleLabel.Size = UDim2.new(1, -8, 1, 0)
-titleLabel.Position = UDim2.new(0, 8, 0, 0)
+titleLabel.Size = UDim2.new(1, -10, 1, 0)
+titleLabel.Position = UDim2.new(0, 10, 0, 0)
 titleLabel.Text = "الانجراف"
 titleLabel.Font = Enum.Font.GothamBold
-titleLabel.TextSize = 11
+titleLabel.TextSize = 12
 titleLabel.TextColor3 = C.title
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = titleBar
+
 makeDraggable(menu, titleBar)
 
--- Content
-local contentWrap = Instance.new("Frame")
-contentWrap.Size = UDim2.new(1, 0, 0, 0)
-contentWrap.BackgroundTransparency = 1
-contentWrap.AutomaticSize = Enum.AutomaticSize.Y
-contentWrap.LayoutOrder = 2
-contentWrap.Parent = menu
+-- ScrollingFrame (importante pro mobile)
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.new(1, 0, 0, 280) -- altura máxima
+scroll.Position = UDim2.new(0, 0, 0, 26)
+scroll.BackgroundTransparency = 1
+scroll.BorderSizePixel = 0
+scroll.ScrollBarThickness = 4
+scroll.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scroll.ScrollingDirection = Enum.ScrollingDirection.Y
+scroll.Parent = menu
 
 local contentPad = Instance.new("UIPadding")
-contentPad.PaddingTop = UDim.new(0, 4)
-contentPad.PaddingBottom = UDim.new(0, 5)
-contentPad.PaddingLeft = UDim.new(0, 5)
-contentPad.PaddingRight = UDim.new(0, 5)
-contentPad.Parent = contentWrap
+contentPad.PaddingTop = UDim.new(0, 6)
+contentPad.PaddingBottom = UDim.new(0, 8)
+contentPad.PaddingLeft = UDim.new(0, 6)
+contentPad.PaddingRight = UDim.new(0, 6)
+contentPad.Parent = scroll
 
 local contentInner = Instance.new("Frame")
-contentInner.Size = UDim2.new(1, 0, 0, 0)
+contentInner.Size = UDim2.new(1, -4, 0, 0)
 contentInner.BackgroundTransparency = 1
 contentInner.AutomaticSize = Enum.AutomaticSize.Y
-contentInner.Parent = contentWrap
+contentInner.Parent = scroll
 
 local contentList = Instance.new("UIListLayout")
 contentList.SortOrder = Enum.SortOrder.LayoutOrder
-contentList.Padding = UDim.new(0, 4)
+contentList.Padding = UDim.new(0, 5)
 contentList.Parent = contentInner
 
+-- Função de criar seção
 local function createSection(name, titleTxt, order)
     local sec = Instance.new("Frame")
     sec.BackgroundColor3 = C.panel
@@ -322,23 +355,23 @@ local function createSection(name, titleTxt, order)
     sec.Size = UDim2.new(1, 0, 0, 0)
     sec.LayoutOrder = order
     sec.Parent = contentInner
-    uiCorner(sec, 5)
+    uiCorner(sec, 6)
     uiStroke(sec, C.divider, 1)
 
     local pad = Instance.new("UIPadding")
-    pad.PaddingTop = UDim.new(0, 5)
-    pad.PaddingBottom = UDim.new(0, 5)
-    pad.PaddingLeft = UDim.new(0, 6)
-    pad.PaddingRight = UDim.new(0, 6)
+    pad.PaddingTop = UDim.new(0, 6)
+    pad.PaddingBottom = UDim.new(0, 6)
+    pad.PaddingLeft = UDim.new(0, 7)
+    pad.PaddingRight = UDim.new(0, 7)
     pad.Parent = sec
 
     local secList = Instance.new("UIListLayout")
     secList.SortOrder = Enum.SortOrder.LayoutOrder
-    secList.Padding = UDim.new(0, 4)
+    secList.Padding = UDim.new(0, 5)
     secList.Parent = sec
 
     local header = Instance.new("Frame")
-    header.Size = UDim2.new(1, 0, 0, 15)
+    header.Size = UDim2.new(1, 0, 0, 16)
     header.BackgroundTransparency = 1
     header.LayoutOrder = 1
     header.Parent = sec
@@ -348,26 +381,26 @@ local function createSection(name, titleTxt, order)
     secLabel.Size = UDim2.new(0.65, 0, 1, 0)
     secLabel.Text = titleTxt
     secLabel.Font = Enum.Font.GothamBold
-    secLabel.TextSize = 10
+    secLabel.TextSize = 11
     secLabel.TextColor3 = C.text
     secLabel.TextXAlignment = Enum.TextXAlignment.Left
     secLabel.Parent = header
     
     local togBtn = Instance.new("TextButton")
-    togBtn.Size = UDim2.new(0, 32, 0, 13)
-    togBtn.Position = UDim2.new(1, -32, 0.5, -6.5)
+    togBtn.Size = UDim2.new(0, 34, 0, 14)
+    togBtn.Position = UDim2.new(1, -34, 0.5, -7)
     togBtn.BackgroundColor3 = C.off
     togBtn.Text = "OFF"
     togBtn.Font = Enum.Font.GothamBold
-    togBtn.TextSize = 8
+    togBtn.TextSize = 9
     togBtn.TextColor3 = C.text
     togBtn.AutoButtonColor = false
     togBtn.Parent = header
-    uiCorner(togBtn, 8)
+    uiCorner(togBtn, 10)
 
     local function makeRow(lOrder, lblTxt, defaultVal)
         local row = Instance.new("Frame")
-        row.Size = UDim2.new(1, 0, 0, 16)
+        row.Size = UDim2.new(1, 0, 0, 18)
         row.BackgroundTransparency = 1
         row.LayoutOrder = lOrder
         row.Parent = sec
@@ -377,7 +410,7 @@ local function createSection(name, titleTxt, order)
         lbl.Size = UDim2.new(0.58, 0, 1, 0)
         lbl.Text = lblTxt
         lbl.Font = Enum.Font.Gotham
-        lbl.TextSize = 9
+        lbl.TextSize = 10
         lbl.TextColor3 = C.dim
         lbl.TextXAlignment = Enum.TextXAlignment.Left
         lbl.Parent = row
@@ -388,18 +421,18 @@ local function createSection(name, titleTxt, order)
         box.BackgroundColor3 = C.inputBg
         box.Text = defaultVal
         box.Font = Enum.Font.GothamMedium
-        box.TextSize = 9
+        box.TextSize = 10
         box.TextColor3 = C.text
-        box.Parent = row
         box.ClearTextOnFocus = true
-        uiCorner(box, 3)
+        box.Parent = row
+        uiCorner(box, 4)
         uiStroke(box, C.border, 1)
         return box
     end
 
     local function makeSubToggle(lOrder, lblTxt, defaultState, callback)
         local row = Instance.new("Frame")
-        row.Size = UDim2.new(1, 0, 0, 16)
+        row.Size = UDim2.new(1, 0, 0, 18)
         row.BackgroundTransparency = 1
         row.LayoutOrder = lOrder
         row.Parent = sec
@@ -409,7 +442,7 @@ local function createSection(name, titleTxt, order)
         lbl.Size = UDim2.new(0.58, 0, 1, 0)
         lbl.Text = lblTxt
         lbl.Font = Enum.Font.Gotham
-        lbl.TextSize = 9
+        lbl.TextSize = 10
         lbl.TextColor3 = C.dim
         lbl.TextXAlignment = Enum.TextXAlignment.Left
         lbl.Parent = row
@@ -420,10 +453,10 @@ local function createSection(name, titleTxt, order)
         btn.BackgroundColor3 = defaultState and C.on or C.off
         btn.Text = defaultState and "ON" or "OFF"
         btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 8
+        btn.TextSize = 9
         btn.TextColor3 = C.text
         btn.Parent = row
-        uiCorner(btn, 3)
+        uiCorner(btn, 4)
         
         local currentState = defaultState
         btn.MouseButton1Click:Connect(function()
@@ -435,19 +468,21 @@ local function createSection(name, titleTxt, order)
     end
 
     local applyBtn = Instance.new("TextButton")
-    applyBtn.Size = UDim2.new(1, 0, 0, 15)
+    applyBtn.Size = UDim2.new(1, 0, 0, 16)
     applyBtn.BackgroundColor3 = C.apply
     applyBtn.Text = "Aplicar"
     applyBtn.Font = Enum.Font.GothamBold
-    applyBtn.TextSize = 9
+    applyBtn.TextSize = 10
     applyBtn.TextColor3 = C.text
     applyBtn.LayoutOrder = 10
     applyBtn.Parent = sec
-    uiCorner(applyBtn, 3)
+    uiCorner(applyBtn, 4)
     
     local function flash(color)
         TweenService:Create(applyBtn, TweenInfo.new(0.1), { BackgroundColor3 = color }):Play()
-        task.delay(0.4, function() TweenService:Create(applyBtn, TweenInfo.new(0.2), { BackgroundColor3 = C.apply }):Play() end)
+        task.delay(0.4, function()
+            TweenService:Create(applyBtn, TweenInfo.new(0.2), { BackgroundColor3 = C.apply }):Play()
+        end)
     end
 
     return sec, togBtn, makeRow, makeSubToggle, applyBtn, flash
@@ -469,15 +504,22 @@ driftTog.MouseButton1Click:Connect(function()
     updateDriftToggle(newVal)
     if newVal then
         local f, fw = parseNum(frictionBox.Text), parseNum(fwBox.Text)
-        if f and fw then applyDrift("front", f, fw); applyDrift("rear", f, fw) end
+        if f and fw then
+            applyDrift("front", f, fw)
+            applyDrift("rear", f, fw)
+        end
     else
-        revertDrift("front"); revertDrift("rear")
+        revertDrift("front")
+        revertDrift("rear")
     end
 end)
 
 driftApply.MouseButton1Click:Connect(function()
     local f, fw = parseNum(frictionBox.Text), parseNum(fwBox.Text)
-    if not f or not fw or not currentCar then driftFlash(C.red) return end
+    if not f or not fw or not currentCar then
+        driftFlash(C.red)
+        return
+    end
     if not driftState.front.enabled then updateDriftToggle(true) end
     local ok1, ok2 = applyDrift("front", f, fw), applyDrift("rear", f, fw)
     driftFlash((ok1 and ok2) and C.green or C.red)
@@ -495,10 +537,16 @@ local function updateMotorToggle(val)
     TweenService:Create(motorTog, TweenInfo.new(0.2), { BackgroundColor3 = val and C.on or C.off }):Play()
 end
 
-motorTog.MouseButton1Click:Connect(function() updateMotorToggle(not motorState.enabled) end)
+motorTog.MouseButton1Click:Connect(function()
+    updateMotorToggle(not motorState.enabled)
+end)
+
 motorApply.MouseButton1Click:Connect(function()
     local v, t = parseNum(velBox.Text), parseNum(torqueBox.Text)
-    if not v or not t then motorFlash(C.red) return end
+    if not v or not t then
+        motorFlash(C.red)
+        return
+    end
     motorState.maxVel, motorState.maxTorque = v, t
     if not motorState.enabled then updateMotorToggle(true) end
     motorFlash(C.green)
@@ -509,7 +557,9 @@ sectionRefs.motor = { setToggle = updateMotorToggle }
 local _, steerTog, makeSteerRow, makeSteerToggle, steerApply, steerFlash = createSection("Steer", "التوجيه (Direção)", 3)
 local angleBox = makeSteerRow(2, "Max Angle", "0.40")
 local speedBox = makeSteerRow(3, "Speed", "0.50")
-makeSteerToggle(4, "Auto-Alinhar", false, function(state) steerState.autoAlign = state end)
+makeSteerToggle(4, "Auto-Alinhar", false, function(state)
+    steerState.autoAlign = state
+end)
 
 local function updateSteerToggle(val)
     steerState.enabled = val
@@ -517,10 +567,16 @@ local function updateSteerToggle(val)
     TweenService:Create(steerTog, TweenInfo.new(0.2), { BackgroundColor3 = val and C.on or C.off }):Play()
 end
 
-steerTog.MouseButton1Click:Connect(function() updateSteerToggle(not steerState.enabled) end)
+steerTog.MouseButton1Click:Connect(function()
+    updateSteerToggle(not steerState.enabled)
+end)
+
 steerApply.MouseButton1Click:Connect(function()
     local a, s = parseNum(angleBox.Text), parseNum(speedBox.Text)
-    if not a or not s then steerFlash(C.red) return end
+    if not a or not s then
+        steerFlash(C.red)
+        return
+    end
     steerState.maxAngle, steerState.speed = a, s
     if not steerState.enabled then updateSteerToggle(true) end
     steerFlash(C.green)
@@ -540,18 +596,30 @@ end)
 local conn1 = UserInputService.InputBegan:Connect(function(input, gp)
     if gp or not isPlayerInCar(currentCar) then return end
 
-    if input.KeyCode == Enum.KeyCode.W then motorState.currentDir = "Frente"; aplicarMotor("Frente")
-    elseif input.KeyCode == Enum.KeyCode.S then motorState.currentDir = "Re"; aplicarMotor("Re")
-    elseif input.KeyCode == Enum.KeyCode.A then steerState.isA = true
-    elseif input.KeyCode == Enum.KeyCode.D then steerState.isD = true end
+    if input.KeyCode == Enum.KeyCode.W then
+        motorState.currentDir = "Frente"
+        aplicarMotor("Frente")
+    elseif input.KeyCode == Enum.KeyCode.S then
+        motorState.currentDir = "Re"
+        aplicarMotor("Re")
+    elseif input.KeyCode == Enum.KeyCode.A then
+        steerState.isA = true
+    elseif input.KeyCode == Enum.KeyCode.D then
+        steerState.isD = true
+    end
 end)
 table.insert(connections, conn1)
 
 local conn2 = UserInputService.InputEnded:Connect(function(input, gp)
     if gp then return end
-    if input.KeyCode == Enum.KeyCode.W or input.KeyCode == Enum.KeyCode.S then motorState.currentDir = "Parar"; aplicarMotor("Parar")
-    elseif input.KeyCode == Enum.KeyCode.A then steerState.isA = false
-    elseif input.KeyCode == Enum.KeyCode.D then steerState.isD = false end
+    if input.KeyCode == Enum.KeyCode.W or input.KeyCode == Enum.KeyCode.S then
+        motorState.currentDir = "Parar"
+        aplicarMotor("Parar")
+    elseif input.KeyCode == Enum.KeyCode.A then
+        steerState.isA = false
+    elseif input.KeyCode == Enum.KeyCode.D then
+        steerState.isD = false
+    end
 end)
 table.insert(connections, conn2)
 
@@ -566,7 +634,9 @@ local conn3 = RunService.RenderStepped:Connect(function(deltaTime)
         if found ~= currentCar then
             currentCar = found
             driftOriginals = { front = nil, rear = nil }
-            for _, ref in pairs(sectionRefs) do ref.setToggle(false) end
+            for _, ref in pairs(sectionRefs) do
+                ref.setToggle(false)
+            end
         end
     end
 
@@ -583,8 +653,11 @@ local conn3 = RunService.RenderStepped:Connect(function(deltaTime)
         local steerDirection = 0
         
         if inCar then
-            if steerState.isA and not steerState.isD then steerDirection = -1
-            elseif steerState.isD and not steerState.isA then steerDirection = 1 end
+            if steerState.isA and not steerState.isD then
+                steerDirection = -1
+            elseif steerState.isD and not steerState.isA then
+                steerDirection = 1
+            end
         end
 
         local slipAngle = 0
@@ -601,7 +674,11 @@ local conn3 = RunService.RenderStepped:Connect(function(deltaTime)
         end
 
         if steerDirection ~= 0 then
-            steerState.currentSteer = math.clamp(steerState.currentSteer + (steerDirection * steerState.speed * deltaTime), -steerState.maxAngle, steerState.maxAngle)
+            steerState.currentSteer = math.clamp(
+                steerState.currentSteer + (steerDirection * steerState.speed * deltaTime),
+                -steerState.maxAngle,
+                steerState.maxAngle
+            )
         else
             local target = (steerState.autoAlign and inCar) and slipAngle or 0
             if steerState.currentSteer < target then
