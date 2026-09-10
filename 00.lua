@@ -15,8 +15,8 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- ▼▼▼  COLOQUE OS NICKS AQUI  ▼▼▼
 -- ═══════════════════════════════════════════════════════════════
 local allowedUsers = {
-    "mitonoanimefight",
     "AntipathicoX",
+    "mitonoanimefight",
 }
 -- ═══════════════════════════════════════════════════════════════
 -- ▲▲▲  FIM DA LISTA DE NICKS  ▲▲▲
@@ -541,43 +541,26 @@ end)
 sectionRefs.steer = { setToggle = updateSteerToggle }
 
 -- ─────────────────────────────────────────────────────────────
--- BOTÕES MOBILE (maiores + arrastáveis)
+-- BOTÕES MOBILE - DIVIDIDOS EM 2 GRUPOS (maiores + arrastáveis)
 -- ─────────────────────────────────────────────────────────────
 local isMobile = UserInputService.TouchEnabled
 
-local mobileFrame = Instance.new("Frame")
-mobileFrame.Size = UDim2.new(0, 240, 0, 140)
-mobileFrame.Position = UDim2.new(0.5, -120, 1, -160)
-mobileFrame.BackgroundTransparency = 1
-mobileFrame.Visible = isMobile
-mobileFrame.Parent = sg
-
--- torna o bloco inteiro arrastável
-makeDraggable(mobileFrame)
-
-local function createMobileBtn(text, pos, size)
+local function createMobileBtn(parent, text, pos, size)
     local btn = Instance.new("TextButton")
     btn.Size = size
     btn.Position = pos
     btn.BackgroundColor3 = C.mobileBtn
     btn.Text = text
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 22
+    btn.TextSize = 26
     btn.TextColor3 = C.text
     btn.AutoButtonColor = false
-    btn.Parent = mobileFrame
-    uiCorner(btn, 10)
+    btn.Parent = parent
+    uiCorner(btn, 12)
     uiStroke(btn, C.border, 1.5)
     return btn
 end
 
--- Botões maiores
-local btnFrente = createMobileBtn("▲", UDim2.new(0.5, -38, 0, 0), UDim2.new(0, 76, 0, 58))
-local btnRe    = createMobileBtn("▼", UDim2.new(0.5, -38, 0, 68), UDim2.new(0, 76, 0, 58))
-local btnEsq   = createMobileBtn("◀", UDim2.new(0, 0, 0.5, -29), UDim2.new(0, 68, 0, 58))
-local btnDir   = createMobileBtn("▶", UDim2.new(1, -68, 0.5, -29), UDim2.new(0, 68, 0, 58))
-
--- Hold logic
 local function bindHold(btn, onPress, onRelease)
     btn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -592,6 +575,18 @@ local function bindHold(btn, onPress, onRelease)
         end
     end)
 end
+
+-- === GRUPO 1: Frente e Ré (lado a lado) ===
+local motorFrame = Instance.new("Frame")
+motorFrame.Size = UDim2.new(0, 180, 0, 70)
+motorFrame.Position = UDim2.new(0.5, -90, 1, -160)
+motorFrame.BackgroundTransparency = 1
+motorFrame.Visible = isMobile
+motorFrame.Parent = sg
+makeDraggable(motorFrame)
+
+local btnFrente = createMobileBtn(motorFrame, "▲", UDim2.new(0, 0, 0, 0), UDim2.new(0, 85, 0, 70))
+local btnRe    = createMobileBtn(motorFrame, "▼", UDim2.new(0, 95, 0, 0), UDim2.new(0, 85, 0, 70))
 
 bindHold(btnFrente, function()
     if isPlayerInCar(currentCar) then
@@ -612,6 +607,18 @@ end, function()
     motorState.currentDir = "Parar"
     aplicarMotor("Parar")
 end)
+
+-- === GRUPO 2: Esquerda e Direita (lado a lado) ===
+local steerFrame = Instance.new("Frame")
+steerFrame.Size = UDim2.new(0, 180, 0, 70)
+steerFrame.Position = UDim2.new(0.5, -90, 1, -80)
+steerFrame.BackgroundTransparency = 1
+steerFrame.Visible = isMobile
+steerFrame.Parent = sg
+makeDraggable(steerFrame)
+
+local btnEsq = createMobileBtn(steerFrame, "◀", UDim2.new(0, 0, 0, 0), UDim2.new(0, 85, 0, 70))
+local btnDir = createMobileBtn(steerFrame, "▶", UDim2.new(0, 95, 0, 0), UDim2.new(0, 85, 0, 70))
 
 bindHold(btnEsq, function()
     if isPlayerInCar(currentCar) then
