@@ -199,11 +199,14 @@ local function uiStroke(parent, color, thick)
     s.Parent = parent
 end
 
+-- makeDraggable com suporte a trava
 local function makeDraggable(frame, handle)
     local dragging, dragStart, startPos = false, nil, nil
+    local locked = false
     handle = handle or frame
 
     local function beginDrag(input)
+        if locked then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
@@ -221,12 +224,18 @@ local function makeDraggable(frame, handle)
     handle.InputEnded:Connect(endDrag)
 
     local conn = UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        if locked or not dragging then return end
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             local delta = input.Position - dragStart
             frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
     table.insert(connections, conn)
+
+    -- retorna função para travar/destravar
+    return function(state)
+        locked = state
+    end
 end
 
 -- ─────────────────────────────────────────────────────────────
@@ -541,7 +550,7 @@ end)
 sectionRefs.steer = { setToggle = updateSteerToggle }
 
 -- ─────────────────────────────────────────────────────────────
--- BOTÕES MOBILE - DIVIDIDOS EM 2 GRUPOS (maiores + arrastáveis)
+-- BOTÕES MOBILE - 2 GRUPOS + BOTÃO DE FIXAR
 -- ─────────────────────────────────────────────────────────────
 local isMobile = UserInputService.TouchEnabled
 
@@ -561,6 +570,23 @@ local function createMobileBtn(parent, text, pos, size)
     return btn
 end
 
+local function createLockBtn(parent)
+    local lockBtn = Instance.new("TextButton")
+    lockBtn.Size = UDim2.new(0, 22, 0, 22)
+    lockBtn.Position = UDim2.new(1, -11, 0, -11) -- canto superior direito
+    lockBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    lockBtn.Text = "🔓"
+    lockBtn.Font = Enum.Font.GothamBold
+    lockBtn.TextSize = 12
+    lockBtn.TextColor3 = C.text
+    lockBtn.AutoButtonColor = false
+    lockBtn.ZIndex = 10
+    lockBtn.Parent = parent
+    uiCorner(lockBtn, 6)
+    uiStroke(lockBtn, C.border, 1)
+    return lockBtn
+end
+
 local function bindHold(btn, onPress, onRelease)
     btn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -576,14 +602,24 @@ local function bindHold(btn, onPress, onRelease)
     end)
 end
 
--- === GRUPO 1: Frente e Ré (lado a lado) ===
+-- === GRUPO 1: Frente e Ré ===
 local motorFrame = Instance.new("Frame")
 motorFrame.Size = UDim2.new(0, 180, 0, 70)
 motorFrame.Position = UDim2.new(0.5, -90, 1, -160)
 motorFrame.BackgroundTransparency = 1
 motorFrame.Visible = isMobile
 motorFrame.Parent = sg
-makeDraggable(motorFrame)
+
+local setMotorLock = makeDraggable(motorFrame)
+local motorLockBtn = createLockBtn(motorFrame)
+local motorLocked = false
+
+motorLockBtn.MouseButton1Click:Connect(function()
+    motorLocked = not motorLocked
+    setMotorLock(motorLocked)
+    motorLockBtn.Text = motorLocked and "🔒" or "🔓"
+    motorLockBtn.BackgroundColor3 = motorLocked and Color3.fromRGB(0, 140, 50) or Color3.fromRGB(40, 40, 40)
+end)
 
 local btnFrente = createMobileBtn(motorFrame, "▲", UDim2.new(0, 0, 0, 0), UDim2.new(0, 85, 0, 70))
 local btnRe    = createMobileBtn(motorFrame, "▼", UDim2.new(0, 95, 0, 0), UDim2.new(0, 85, 0, 70))
@@ -608,14 +644,24 @@ end, function()
     aplicarMotor("Parar")
 end)
 
--- === GRUPO 2: Esquerda e Direita (lado a lado) ===
+-- === GRUPO 2: Esquerda e Direita ===
 local steerFrame = Instance.new("Frame")
 steerFrame.Size = UDim2.new(0, 180, 0, 70)
 steerFrame.Position = UDim2.new(0.5, -90, 1, -80)
 steerFrame.BackgroundTransparency = 1
 steerFrame.Visible = isMobile
 steerFrame.Parent = sg
-makeDraggable(steerFrame)
+
+local setSteerLock = makeDraggable(steerFrame)
+local steerLockBtn = createLockBtn(steerFrame)
+local steerLocked = false
+
+steerLockBtn.MouseButton1Click:Connect(function()
+    steerLocked = not steerLocked
+    setSteerLock(steerLocked)
+    steerLockBtn.Text = steerLocked and "🔒" or "🔓"
+    steerLockBtn.BackgroundColor3 = steerLocked and Color3.fromRGB(0, 140, 50) or Color3.fromRGB(40, 40, 40)
+end)
 
 local btnEsq = createMobileBtn(steerFrame, "◀", UDim2.new(0, 0, 0, 0), UDim2.new(0, 85, 0, 70))
 local btnDir = createMobileBtn(steerFrame, "▶", UDim2.new(0, 95, 0, 0), UDim2.new(0, 85, 0, 70))
