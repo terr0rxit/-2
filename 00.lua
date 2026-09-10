@@ -15,11 +15,9 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- ▼▼▼  COLOQUE OS NICKS AQUI  ▼▼▼
 -- ═══════════════════════════════════════════════════════════════
 local allowedUsers = {
-    "nickdapessoataletc",   -- exemplo
-    "AntipathicoX",
     "mitonoanimefight",
-    "SeuNickAqui",          -- coloque o nick real
-    -- "OutroNick",
+    "AntipathicoX",
+    "SeuNickAqui",
 }
 -- ═══════════════════════════════════════════════════════════════
 -- ▲▲▲  FIM DA LISTA DE NICKS  ▲▲▲
@@ -58,6 +56,7 @@ local C = {
     applyHover = Color3.fromRGB(55, 55, 55),
     green      = Color3.fromRGB(0, 170, 60),
     red        = Color3.fromRGB(170, 30, 30),
+    mobileBtn  = Color3.fromRGB(25, 25, 25),
 }
 
 -- ─────────────────────────────────────────────────────────────
@@ -73,12 +72,11 @@ local motorState = { enabled = false, maxVel = 100, maxTorque = 50000, currentDi
 local steerState = { enabled = false, autoAlign = false, maxAngle = 0.4, speed = 0.5, currentSteer = 0, isA = false, isD = false }
 
 -- ─────────────────────────────────────────────────────────────
--- Lógica Central de Busca e Verificação
+-- Lógica Central
 -- ─────────────────────────────────────────────────────────────
 local function findPlayerCar()
     local folder = workspace:FindFirstChild("Cars")
     if not folder then return nil end
-
     for _, car in ipairs(folder:GetChildren()) do
         local stats = car:FindFirstChild("Stats")
         if stats then
@@ -103,7 +101,7 @@ local function parseNum(str)
 end
 
 -- ─────────────────────────────────────────────────────────────
--- 1. LÓGICA DO DRIFT
+-- DRIFT
 -- ─────────────────────────────────────────────────────────────
 local WHEEL_PREFIXES = { front = { "FL", "FR" }, rear  = { "RL", "RR" } }
 
@@ -132,10 +130,8 @@ local function applyDrift(group, friction, frictionWeight)
     if not currentCar then return false end
     local wheels = getWheels(currentCar, group)
     if #wheels == 0 then return false end
-
     if not driftOriginals[group] then driftOriginals[group] = readPhysics(wheels[1]) end
     local base = driftOriginals[group]
-    
     for _, w in ipairs(wheels) do
         w.CustomPhysicalProperties = PhysicalProperties.new(base.density, friction, base.elasticity, frictionWeight, base.elasticityWeight)
     end
@@ -152,7 +148,7 @@ local function revertDrift(group)
 end
 
 -- ─────────────────────────────────────────────────────────────
--- 2. LÓGICA DO MOTOR
+-- MOTOR
 -- ─────────────────────────────────────────────────────────────
 local function obterConstraints()
     if not currentCar then return nil end
@@ -204,12 +200,8 @@ local function uiStroke(parent, color, thick)
     s.Parent = parent
 end
 
--- Arrastar com suporte a Mouse + Touch (Mobile)
 local function makeDraggable(frame, handle)
-    local dragging = false
-    local dragStart = nil
-    local startPos = nil
-
+    local dragging, dragStart, startPos = false, nil, nil
     handle = handle or frame
 
     local function beginDrag(input)
@@ -232,12 +224,7 @@ local function makeDraggable(frame, handle)
     local conn = UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
-            frame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
     table.insert(connections, conn)
@@ -257,13 +244,11 @@ sg.Parent = playerGui
 
 sg:GetPropertyChangedSignal("Parent"):Connect(function()
     if not sg.Parent then
-        for _, c in ipairs(connections) do
-            c:Disconnect()
-        end
+        for _, c in ipairs(connections) do c:Disconnect() end
     end
 end)
 
--- Botão fechado
+-- Botão do menu
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0, 90, 0, 26)
 toggleBtn.Position = UDim2.new(0, 14, 0.5, -13)
@@ -277,7 +262,7 @@ uiCorner(toggleBtn, 6)
 uiStroke(toggleBtn, C.border, 1)
 makeDraggable(toggleBtn)
 
--- Menu principal
+-- Menu
 local menu = Instance.new("Frame")
 menu.Size = UDim2.new(0, 190, 0, 0)
 menu.Position = UDim2.new(0, 110, 0.5, -13)
@@ -289,7 +274,6 @@ menu.Parent = sg
 uiCorner(menu, 8)
 uiStroke(menu, C.border, 1)
 
--- Title bar (arrastável)
 local titleBar = Instance.new("Frame")
 titleBar.Size = UDim2.new(1, 0, 0, 26)
 titleBar.BackgroundColor3 = C.panel
@@ -313,12 +297,10 @@ titleLabel.TextSize = 12
 titleLabel.TextColor3 = C.title
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = titleBar
-
 makeDraggable(menu, titleBar)
 
--- ScrollingFrame (importante pro mobile)
 local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, 0, 0, 280) -- altura máxima
+scroll.Size = UDim2.new(1, 0, 0, 280)
 scroll.Position = UDim2.new(0, 0, 0, 26)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
@@ -347,7 +329,6 @@ contentList.SortOrder = Enum.SortOrder.LayoutOrder
 contentList.Padding = UDim.new(0, 5)
 contentList.Parent = contentInner
 
--- Função de criar seção
 local function createSection(name, titleTxt, order)
     local sec = Instance.new("Frame")
     sec.BackgroundColor3 = C.panel
@@ -488,7 +469,7 @@ local function createSection(name, titleTxt, order)
     return sec, togBtn, makeRow, makeSubToggle, applyBtn, flash
 end
 
--- ── Seção: Drift ──────────────────────────
+-- Seções
 local _, driftTog, makeDriftRow, _, driftApply, driftFlash = createSection("Drift", "الانجراف (Drift)", 1)
 local frictionBox = makeDriftRow(2, "Friction", "0.30")
 local fwBox       = makeDriftRow(3, "Weight", "1.00")
@@ -504,29 +485,21 @@ driftTog.MouseButton1Click:Connect(function()
     updateDriftToggle(newVal)
     if newVal then
         local f, fw = parseNum(frictionBox.Text), parseNum(fwBox.Text)
-        if f and fw then
-            applyDrift("front", f, fw)
-            applyDrift("rear", f, fw)
-        end
+        if f and fw then applyDrift("front", f, fw) applyDrift("rear", f, fw) end
     else
-        revertDrift("front")
-        revertDrift("rear")
+        revertDrift("front") revertDrift("rear")
     end
 end)
 
 driftApply.MouseButton1Click:Connect(function()
     local f, fw = parseNum(frictionBox.Text), parseNum(fwBox.Text)
-    if not f or not fw or not currentCar then
-        driftFlash(C.red)
-        return
-    end
+    if not f or not fw or not currentCar then driftFlash(C.red) return end
     if not driftState.front.enabled then updateDriftToggle(true) end
     local ok1, ok2 = applyDrift("front", f, fw), applyDrift("rear", f, fw)
     driftFlash((ok1 and ok2) and C.green or C.red)
 end)
 sectionRefs.drift = { setToggle = updateDriftToggle }
 
--- ── Seção: Motor ──────────────────────────
 local _, motorTog, makeMotorRow, _, motorApply, motorFlash = createSection("Motor", "المحرك (Motor)", 2)
 local velBox = makeMotorRow(2, "Velocidade", "100")
 local torqueBox = makeMotorRow(3, "Torque", "50000")
@@ -537,29 +510,20 @@ local function updateMotorToggle(val)
     TweenService:Create(motorTog, TweenInfo.new(0.2), { BackgroundColor3 = val and C.on or C.off }):Play()
 end
 
-motorTog.MouseButton1Click:Connect(function()
-    updateMotorToggle(not motorState.enabled)
-end)
-
+motorTog.MouseButton1Click:Connect(function() updateMotorToggle(not motorState.enabled) end)
 motorApply.MouseButton1Click:Connect(function()
     local v, t = parseNum(velBox.Text), parseNum(torqueBox.Text)
-    if not v or not t then
-        motorFlash(C.red)
-        return
-    end
+    if not v or not t then motorFlash(C.red) return end
     motorState.maxVel, motorState.maxTorque = v, t
     if not motorState.enabled then updateMotorToggle(true) end
     motorFlash(C.green)
 end)
 sectionRefs.motor = { setToggle = updateMotorToggle }
 
--- ── Seção: Direção ────────────────────────
 local _, steerTog, makeSteerRow, makeSteerToggle, steerApply, steerFlash = createSection("Steer", "التوجيه (Direção)", 3)
 local angleBox = makeSteerRow(2, "Max Angle", "0.40")
 local speedBox = makeSteerRow(3, "Speed", "0.50")
-makeSteerToggle(4, "Auto-Alinhar", false, function(state)
-    steerState.autoAlign = state
-end)
+makeSteerToggle(4, "Auto-Alinhar", false, function(state) steerState.autoAlign = state end)
 
 local function updateSteerToggle(val)
     steerState.enabled = val
@@ -567,16 +531,10 @@ local function updateSteerToggle(val)
     TweenService:Create(steerTog, TweenInfo.new(0.2), { BackgroundColor3 = val and C.on or C.off }):Play()
 end
 
-steerTog.MouseButton1Click:Connect(function()
-    updateSteerToggle(not steerState.enabled)
-end)
-
+steerTog.MouseButton1Click:Connect(function() updateSteerToggle(not steerState.enabled) end)
 steerApply.MouseButton1Click:Connect(function()
     local a, s = parseNum(angleBox.Text), parseNum(speedBox.Text)
-    if not a or not s then
-        steerFlash(C.red)
-        return
-    end
+    if not a or not s then steerFlash(C.red) return end
     steerState.maxAngle, steerState.speed = a, s
     if not steerState.enabled then updateSteerToggle(true) end
     steerFlash(C.green)
@@ -584,7 +542,92 @@ end)
 sectionRefs.steer = { setToggle = updateSteerToggle }
 
 -- ─────────────────────────────────────────────────────────────
--- Eventos e Loops
+-- BOTÕES MOBILE (só aparecem se for touch)
+-- ─────────────────────────────────────────────────────────────
+local isMobile = UserInputService.TouchEnabled
+
+local mobileFrame = Instance.new("Frame")
+mobileFrame.Size = UDim2.new(0, 200, 0, 110)
+mobileFrame.Position = UDim2.new(0.5, -100, 1, -130)
+mobileFrame.BackgroundTransparency = 1
+mobileFrame.Visible = isMobile
+mobileFrame.Parent = sg
+
+local function createMobileBtn(text, pos, size)
+    local btn = Instance.new("TextButton")
+    btn.Size = size
+    btn.Position = pos
+    btn.BackgroundColor3 = C.mobileBtn
+    btn.Text = text
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.TextColor3 = C.text
+    btn.AutoButtonColor = false
+    btn.Parent = mobileFrame
+    uiCorner(btn, 8)
+    uiStroke(btn, C.border, 1)
+    return btn
+end
+
+local btnFrente = createMobileBtn("▲", UDim2.new(0.5, -30, 0, 0), UDim2.new(0, 60, 0, 45))
+local btnRe    = createMobileBtn("▼", UDim2.new(0.5, -30, 0, 55), UDim2.new(0, 60, 0, 45))
+local btnEsq   = createMobileBtn("◀", UDim2.new(0, 0, 0.5, -22), UDim2.new(0, 55, 0, 45))
+local btnDir   = createMobileBtn("▶", UDim2.new(1, -55, 0.5, -22), UDim2.new(0, 55, 0, 45))
+
+-- Hold logic para botões mobile
+local function bindHold(btn, onPress, onRelease)
+    btn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            onPress()
+            btn.BackgroundColor3 = C.on
+        end
+    end)
+    btn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            onRelease()
+            btn.BackgroundColor3 = C.mobileBtn
+        end
+    end)
+end
+
+bindHold(btnFrente, function()
+    if isPlayerInCar(currentCar) then
+        motorState.currentDir = "Frente"
+        aplicarMotor("Frente")
+    end
+end, function()
+    motorState.currentDir = "Parar"
+    aplicarMotor("Parar")
+end)
+
+bindHold(btnRe, function()
+    if isPlayerInCar(currentCar) then
+        motorState.currentDir = "Re"
+        aplicarMotor("Re")
+    end
+end, function()
+    motorState.currentDir = "Parar"
+    aplicarMotor("Parar")
+end)
+
+bindHold(btnEsq, function()
+    if isPlayerInCar(currentCar) then
+        steerState.isA = true
+    end
+end, function()
+    steerState.isA = false
+end)
+
+bindHold(btnDir, function()
+    if isPlayerInCar(currentCar) then
+        steerState.isD = true
+    end
+end, function()
+    steerState.isD = false
+end)
+
+-- ─────────────────────────────────────────────────────────────
+-- Eventos
 -- ─────────────────────────────────────────────────────────────
 local menuOpen = false
 toggleBtn.MouseButton1Click:Connect(function()
@@ -593,9 +636,9 @@ toggleBtn.MouseButton1Click:Connect(function()
     toggleBtn.Text = menuOpen and "✕" or "الانجراف"
 end)
 
+-- Teclado (PC)
 local conn1 = UserInputService.InputBegan:Connect(function(input, gp)
     if gp or not isPlayerInCar(currentCar) then return end
-
     if input.KeyCode == Enum.KeyCode.W then
         motorState.currentDir = "Frente"
         aplicarMotor("Frente")
@@ -623,6 +666,7 @@ local conn2 = UserInputService.InputEnded:Connect(function(input, gp)
 end)
 table.insert(connections, conn2)
 
+-- Loop principal
 local updateTick = 0
 local wasInCar = false
 
@@ -634,9 +678,7 @@ local conn3 = RunService.RenderStepped:Connect(function(deltaTime)
         if found ~= currentCar then
             currentCar = found
             driftOriginals = { front = nil, rear = nil }
-            for _, ref in pairs(sectionRefs) do
-                ref.setToggle(false)
-            end
+            for _, ref in pairs(sectionRefs) do ref.setToggle(false) end
         end
     end
 
@@ -651,13 +693,9 @@ local conn3 = RunService.RenderStepped:Connect(function(deltaTime)
 
     if steerState.enabled and currentCar then
         local steerDirection = 0
-        
         if inCar then
-            if steerState.isA and not steerState.isD then
-                steerDirection = -1
-            elseif steerState.isD and not steerState.isA then
-                steerDirection = 1
-            end
+            if steerState.isA and not steerState.isD then steerDirection = -1
+            elseif steerState.isD and not steerState.isA then steerDirection = 1 end
         end
 
         local slipAngle = 0
@@ -674,11 +712,7 @@ local conn3 = RunService.RenderStepped:Connect(function(deltaTime)
         end
 
         if steerDirection ~= 0 then
-            steerState.currentSteer = math.clamp(
-                steerState.currentSteer + (steerDirection * steerState.speed * deltaTime),
-                -steerState.maxAngle,
-                steerState.maxAngle
-            )
+            steerState.currentSteer = math.clamp(steerState.currentSteer + (steerDirection * steerState.speed * deltaTime), -steerState.maxAngle, steerState.maxAngle)
         else
             local target = (steerState.autoAlign and inCar) and slipAngle or 0
             if steerState.currentSteer < target then
