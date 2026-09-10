@@ -15,8 +15,8 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- ▼▼▼  COLOQUE OS NICKS AQUI  ▼▼▼
 -- ═══════════════════════════════════════════════════════════════
 local allowedUsers = {
-    "AntipathicoX",   -- exemplo
-    "AntipathicoX",          -- coloque o nick real
+    "---",   -- exemplo
+    "---",          -- coloque o nick real
     -- "OutroNick",         -- descomente e adicione mais se quiser
 }
 -- ═══════════════════════════════════════════════════════════════
