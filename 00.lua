@@ -17,7 +17,6 @@ local playerGui = player:WaitForChild("PlayerGui")
 local allowedUsers = {
     "mitonoanimefight",
     "AntipathicoX",
-    "SeuNickAqui",
 }
 -- ═══════════════════════════════════════════════════════════════
 -- ▲▲▲  FIM DA LISTA DE NICKS  ▲▲▲
@@ -542,16 +541,19 @@ end)
 sectionRefs.steer = { setToggle = updateSteerToggle }
 
 -- ─────────────────────────────────────────────────────────────
--- BOTÕES MOBILE (só aparecem se for touch)
+-- BOTÕES MOBILE (maiores + arrastáveis)
 -- ─────────────────────────────────────────────────────────────
 local isMobile = UserInputService.TouchEnabled
 
 local mobileFrame = Instance.new("Frame")
-mobileFrame.Size = UDim2.new(0, 200, 0, 110)
-mobileFrame.Position = UDim2.new(0.5, -100, 1, -130)
+mobileFrame.Size = UDim2.new(0, 240, 0, 140)
+mobileFrame.Position = UDim2.new(0.5, -120, 1, -160)
 mobileFrame.BackgroundTransparency = 1
 mobileFrame.Visible = isMobile
 mobileFrame.Parent = sg
+
+-- torna o bloco inteiro arrastável
+makeDraggable(mobileFrame)
 
 local function createMobileBtn(text, pos, size)
     local btn = Instance.new("TextButton")
@@ -560,21 +562,22 @@ local function createMobileBtn(text, pos, size)
     btn.BackgroundColor3 = C.mobileBtn
     btn.Text = text
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 14
+    btn.TextSize = 22
     btn.TextColor3 = C.text
     btn.AutoButtonColor = false
     btn.Parent = mobileFrame
-    uiCorner(btn, 8)
-    uiStroke(btn, C.border, 1)
+    uiCorner(btn, 10)
+    uiStroke(btn, C.border, 1.5)
     return btn
 end
 
-local btnFrente = createMobileBtn("▲", UDim2.new(0.5, -30, 0, 0), UDim2.new(0, 60, 0, 45))
-local btnRe    = createMobileBtn("▼", UDim2.new(0.5, -30, 0, 55), UDim2.new(0, 60, 0, 45))
-local btnEsq   = createMobileBtn("◀", UDim2.new(0, 0, 0.5, -22), UDim2.new(0, 55, 0, 45))
-local btnDir   = createMobileBtn("▶", UDim2.new(1, -55, 0.5, -22), UDim2.new(0, 55, 0, 45))
+-- Botões maiores
+local btnFrente = createMobileBtn("▲", UDim2.new(0.5, -38, 0, 0), UDim2.new(0, 76, 0, 58))
+local btnRe    = createMobileBtn("▼", UDim2.new(0.5, -38, 0, 68), UDim2.new(0, 76, 0, 58))
+local btnEsq   = createMobileBtn("◀", UDim2.new(0, 0, 0.5, -29), UDim2.new(0, 68, 0, 58))
+local btnDir   = createMobileBtn("▶", UDim2.new(1, -68, 0.5, -29), UDim2.new(0, 68, 0, 58))
 
--- Hold logic para botões mobile
+-- Hold logic
 local function bindHold(btn, onPress, onRelease)
     btn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
