@@ -16,7 +16,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- ═══════════════════════════════════════════════════════════════
 local allowedUsers = {
     "AntipathicoX",
-    "blublulbusd",
+    "blublubluasd",
     "riqueza97",
     "mitonoanimefight",
 }
