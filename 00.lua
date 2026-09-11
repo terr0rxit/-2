@@ -18,6 +18,7 @@ local allowedUsers = {
     "AntipathicoX",
     "blublubluasd",
     "riqueza97",
+    "melhormenunaaras",
     "mitonoanimefight",
 }
 -- ═══════════════════════════════════════════════════════════════
